@@ -1,0 +1,14 @@
+{
+  "name": "javascriptutils",
+  "version": "1.0.0",
+  "description": "```bash     git clone https://github.com/vilalali/javaScriptUtils.git     cd javaScriptUtils     npm i ```",
+  "main": "local2MinioBulkUpload-.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "minio": "^8.0.0"
+  }
+}
