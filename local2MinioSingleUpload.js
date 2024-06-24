@@ -2,15 +2,15 @@ var Minio = require("minio");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 var minioClient = new Minio.Client({
-    endPoint: 'IP Address',
+    endPoint: 'minio.iiit.ac.in',
     port: 9000,
-    useSSL: true,
-    accessKey: '',
-    secretKey: ''
+    useSSL: false,
+    accessKey: '73pTye4dlwCDeVGBihWy',
+    secretKey: 'uK1lTvHMsdMLKidG5CenagszDLXst9h5vvUP4reW'
 });
 
-const filename = "FileName";
-const localFilePath = "/Path/File Name";
+const filename = "IHub_Dataset_File4_Test.tar.gz";
+const localFilePath = "/home/vilal/MyWork/IHub/DFSDataSet/IHub_Dataset_File4_Test.tar.gz";
 
 // Create a readable stream from the local file
 const fileStream = require('fs').createReadStream(localFilePath);
@@ -21,7 +21,7 @@ const totalBytes = stats.size;
 let uploadedBytes = 0;
 
 // Upload the file to MinIO
-minioClient.putObject("Bucket Name", filename, fileStream, totalBytes, function (error, etag) {
+minioClient.putObject("datafoundation", filename, fileStream, totalBytes, function (error, etag) {
     if (error) {
         console.error("Error occurred while uploading:", error);
         process.exit(1); // Exit with error code 1
