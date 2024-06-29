@@ -1,58 +1,100 @@
-var Minio = require("minio");
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+var Minio = require("minio");
+var fs = require('fs');
+var path = require('path');
+
+// Create MinIO client instance
 var minioClient = new Minio.Client({
-    endPoint: 'IP Address',
+    endPoint: 'minio.iiit.ac.in',
     port: 9000,
-    useSSL: false,
+    useSSL: true,
     accessKey: '',
     secretKey: ''
 });
 
-const filename = "File Name";
-const localFilePath = "/Path/File_Name";
+const bucketName = "microlab/IGIB-COVID/MicroLabsGenomeSequences_02.2024_V29.tar.gz";
+const localDownloadPath = "/data/codeDumpDfs/farhin";
 
-minioClient.getObject("BucketName", filename, function (error, stream) {
-    if (error) {
-        return console.log(error);
-    }
+// Ensure the local download directory exists
+if (!fs.existsSync(localDownloadPath)) {
+    fs.mkdirSync(localDownloadPath, { recursive: true });
+}
 
-    // Variables to track progress
-    let totalBytes = 0;
-    let downloadedBytes = 0;
+// Function to download an object and show progress
+async function downloadObject(objectName) {
+    return new Promise((resolve, reject) => {
+        minioClient.statObject(bucketName, objectName, function (err, stat) {
+            if (err) {
+                return reject("Unable to retrieve file size: " + err);
+            }
 
-    // Get total size of the file
-    minioClient.statObject("BucketName", filename, function(err, stat) {
-        if (err) {
-            return console.log("Unable to retrieve file size:", err);
-        }
-        totalBytes = stat.size;
+            const totalBytes = stat.size;
+            let downloadedBytes = 0;
+            const filePath = path.join(localDownloadPath, objectName);
+
+            // Ensure the directory structure exists
+            const dir = path.dirname(filePath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+
+            minioClient.getObject(bucketName, objectName, function (error, stream) {
+                if (error) {
+                    return reject(error);
+                }
+
+                const fileStream = fs.createWriteStream(filePath);
+                stream.pipe(fileStream);
+
+                stream.on('data', function (chunk) {
+                    downloadedBytes += chunk.length;
+                    const progress = Math.round((downloadedBytes / totalBytes) * 100);
+                    process.stdout.clearLine();
+                    process.stdout.cursorTo(0);
+                    process.stdout.write(`Downloading ${objectName}: ${progress}%`);
+                });
+
+                stream.on('end', function () {
+                    console.log(`\nFile ${objectName} downloaded to ${filePath}`);
+                    resolve();
+                });
+
+                stream.on('error', function (err) {
+                    reject(err);
+                });
+            });
+        });
     });
+}
 
-    // Pipe the stream to write to the file
-    const fileStream = require('fs').createWriteStream(localFilePath);
-    stream.pipe(fileStream);
+// Function to download all objects in the bucket
+async function downloadAllObjects() {
+    const objectsList = [];
+    const stream = minioClient.listObjects(bucketName, '', true);
 
-    // Listen for data events to calculate progress
-    stream.on('data', function(chunk) {
-        downloadedBytes += chunk.length;
-        const progress = Math.round((downloadedBytes / totalBytes) * 100);
-        process.stdout.clearLine();  // Clear the previous progress output
-        process.stdout.cursorTo(0);  // Move cursor to beginning of line
-        process.stdout.write(`Download progress: ${progress}%`);
+    return new Promise((resolve, reject) => {
+        stream.on('data', obj => objectsList.push(obj.name));
+        stream.on('error', reject);
+        stream.on('end', async () => {
+            try {
+                for (const objectName of objectsList) {
+                    console.log(`Starting download for ${objectName}`);
+                    await downloadObject(objectName);
+                }
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
     });
+}
 
-    // Listen for the end event to indicate completion
-    stream.on('end', function() {
-        console.log();  // Move to next line after progress display
-        console.log(`File downloaded to ${localFilePath}`);
-        console.log("Download completed successfully!");
-        process.exit(0); // Exit with success code 0
+// Start the download process
+downloadAllObjects()
+    .then(() => {
+        console.log('All files downloaded successfully!');
+    })
+    .catch(err => {
+        console.error('Error downloading files:', err);
     });
-
-    // Handle errors
-    stream.on('error', function(err) {
-        console.log(err);
-        process.exit(1); // Exit with error code 1
-    });
-});
-

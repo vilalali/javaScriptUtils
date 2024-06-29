@@ -6,15 +6,15 @@ var path = require('path');
 
 // Create MinIO client instance
 var minioClient = new Minio.Client({
-    endPoint: 'IP Address',
+    endPoint: 'minio.iiit.ac.in',
     port: 9000,
     useSSL: true,
     accessKey: '',
     secretKey: ''
 });
 
-const bucketName = "YourBucketName";
-const localDownloadPath = "/home/Path";
+const bucketName = "microlab/IGIB-COVID/MicroLabsGenomeSequences_02.2024_V29.tar.gz";
+const localDownloadPath = "/data/codeDumpDfs/farhin";
 
 // Ensure the local download directory exists
 if (!fs.existsSync(localDownloadPath)) {

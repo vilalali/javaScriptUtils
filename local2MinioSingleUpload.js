@@ -5,8 +5,8 @@ var minioClient = new Minio.Client({
     endPoint: 'minio.iiit.ac.in',
     port: 9000,
     useSSL: false,
-    accessKey: '73pTye4dlwCDeVGBihWy',
-    secretKey: 'uK1lTvHMsdMLKidG5CenagszDLXst9h5vvUP4reW'
+    accessKey: '',
+    secretKey: ''
 });
 
 const filename = "IHub_Dataset_File4_Test.tar.gz";
